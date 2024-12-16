@@ -1,6 +1,6 @@
 export interface Artwork {
     id: number;
-    title?: string;
+    title: string;
     place_of_origin?: string;
     artist_display?: string;
     inscriptions?: string;

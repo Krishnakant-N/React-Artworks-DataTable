@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Button } from "primereact/button";
-import { InputNumber } from "primereact/inputnumber";
+import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
-import { DataTable, DataTablePageEvent } from "primereact/datatable";
+import { DataTable } from "primereact/datatable";
 import { ProgressSpinner } from "primereact/progressspinner";
 import axios from "axios";
 import { Artwork } from "./interface/Artwork.ts";
@@ -41,17 +41,25 @@ function App() {
           },
         }
       );
-
-      const fetchedArtworks = response.data.data.map((artwork: Artwork) => ({
-        ...artwork,
-        checked: checkedItems.includes(artwork.id),
-      }));
-
+  
+      const fetchedArtworks: Artwork[] = response.data.data
+        .filter((artwork: any) => artwork.id) // Ensure `id` exists
+        .map((artwork: any) => ({
+          id: artwork.id,
+          title: artwork.title,
+          place_of_origin: artwork.place_of_origin || "Unknown",
+          artist_display: artwork.artist_display || "Unknown",
+          inscriptions: artwork.inscriptions || null,
+          date_start: artwork.date_start || null,
+          date_end: artwork.date_end || null,
+          checked: checkedItems.includes(artwork.id),
+        }));
+  
       setArtworks(fetchedArtworks);
       setTotalRecords(response.data.pagination.total);
-
-      const allRowsOnPageSelected = fetchedArtworks.every((artwork) =>
-        checkedItems.includes(artwork.id)
+  
+      const allRowsOnPageSelected = fetchedArtworks.every(
+        (artwork) => checkedItems.includes(artwork.id)
       );
       setIsAllPageSelected(allRowsOnPageSelected);
     } catch (error) {
@@ -60,16 +68,17 @@ function App() {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     loadArtworkData();
   }, [paginationState]);
 
-  const onPage = (event: DataTablePageEvent) => {
+  const onPage = (event: any) => {
     setPaginationState({
       first: event.first,
       rows: event.rows,
-      page: event.page,
+      page: event.page || event.first / event.rows,
     });
   };
 
@@ -160,11 +169,15 @@ function App() {
     />
   );
 
+  const handleValueChange = (e: InputNumberValueChangeEvent) => {
+    setRowsToSelect(e.value ?? null); // Safely handle null and undefined
+  };
+
   const selectRowsTemplate = () => (
     <div style={{ display: "flex", alignItems: "center", width: "18rem" }}>
       <InputNumber
         value={rowsToSelect}
-        onValueChange={(e) => setRowsToSelect(e.value)}
+        onValueChange={handleValueChange}
         placeholder="Enter rows to select"
         style={{ width: "150px" }}
       />
